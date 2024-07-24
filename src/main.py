@@ -22,26 +22,22 @@ def getDownloadUrls(userUrl) :
 
 
 def main(context):
-    # Why not try the Appwrite SDK?
-    #
-    # client = (
-    #     Client()
-    #     .set_endpoint("https://cloud.appwrite.io/v1")
-    #     .set_project(os.environ["APPWRITE_FUNCTION_PROJECT_ID"])
-    #     .set_key(os.environ["APPWRITE_API_KEY"])
-    # )
-
+    # The `context.req` object contains the request data
     if context.req.method == "GET":
         # Extract the value from query parameters
         value = context.req.query.get("value")
 
         if value:
-            # Call the process_value function with the extracted value
-            processed_result = getDownloadUrls(value)
-            # Convert the list to a string
-            result_string = str(processed_result)
-            # Send the result string to the user
-            return context.res.send(result_string)
+            try:
+                # Call the getDownloadUrls function with the extracted value
+                download_urls = getDownloadUrls(value)
+                # Convert the list to a string
+                result_string = str(download_urls)
+                # Send the result string to the user
+                return context.res.send(result_string)
+            except Exception as e:
+                # Handle exceptions and send an error response
+                return context.res.send(f"Error processing URL: {str(e)}")
         else:
             # Send a response if the value is missing
             return context.res.send("Value parameter is missing in GET REQUEST")
