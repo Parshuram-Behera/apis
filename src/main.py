@@ -1,24 +1,24 @@
 from appwrite.client import Client
 import os
 from pytube import YouTube
+import logging
 
 
-# This is your Appwrite function
-# It's executed each time we get a request
+def getDownloadUrls(userUrl):
+    try:
+        url = str(userUrl)
+        youtubeObj = YouTube(url)
+        vidStreams = youtubeObj.streams.filter(mime_type="video/mp4", type="video").order_by('resolution')
 
+        streamUrls = []
 
-def getDownloadUrls(userUrl) :
-    url = str(userUrl)
-    youtubeObj = YouTube(url)
-    vidStreams = youtubeObj.streams.filter( mime_type="video/mp4",type="video").order_by('resolution')
+        for stream in vidStreams:
+            streamUrls.append(stream.url)
 
-    streamUrls = []
-
-    for stream in vidStreams :
-        streamUrls.append(stream.url)
-
-    return streamUrls
-
+        return streamUrls
+    except Exception as e:
+        logging.error(f"Error processing URL {userUrl}: {e}")
+        raise e
 
 
 def main(context):
@@ -42,8 +42,7 @@ def main(context):
             # Send a response if the value is missing
             return context.res.send("Value parameter is missing in GET REQUEST")
 
-    # `ctx.res.json()` is a handy helper for sending JSON
-    return context.res.json(
-
-        "Hello Parshuram Behera"
-    )
+    # `context.res.json()` is a handy helper for sending JSON
+    return context.res.json({
+        "message": "Hello Parshuram Behera"
+    })
