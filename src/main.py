@@ -36,8 +36,12 @@ def main(context):
         value = context.req.query.get("value")
 
         if value:
-            # Send a response with the extracted value
-            return context.res.send(f"Got A GET REQUEST with value: {value}")
+            # Call the process_value function with the extracted value
+            processed_result = getDownloadUrls(value)
+            # Convert the list to a string
+            result_string = str(processed_result)
+            # Send the result string to the user
+            return context.res.send(result_string)
         else:
             # Send a response if the value is missing
             return context.res.send("Value parameter is missing in GET REQUEST")
