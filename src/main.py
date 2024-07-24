@@ -1,9 +1,26 @@
 from appwrite.client import Client
 import os
+from pytube import YouTube
 
 
 # This is your Appwrite function
 # It's executed each time we get a request
+
+
+def getDownloadUrls(userUrl) :
+    url = str(userUrl)
+    youtubeObj = YouTube(url)
+    vidStreams = youtubeObj.streams.filter( mime_type="video/mp4",type="video").order_by('resolution')
+
+    streamUrls = []
+
+    for stream in vidStreams :
+        streamUrls.append(stream.url)
+
+    return streamUrls
+
+
+
 def main(context):
     # Why not try the Appwrite SDK?
     #
@@ -15,6 +32,7 @@ def main(context):
     # )
 
     # You can log messages to the console
+
     context.log("Hello, Logs!")
 
     # If something goes wrong, log an error
