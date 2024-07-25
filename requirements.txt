@@ -1,2 +1,2 @@
 appwrite
-pytube
+yt_dlp

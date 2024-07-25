@@ -1,23 +1,32 @@
 from appwrite.client import Client
 import os
-from pytube import YouTube
 import logging
+import yt_dlp
 
 
-def getDownloadUrls(userUrl):
+
+
+def getDownloadUrls(video_url):
+    global sorted_video_streams
     try:
-        url = str(userUrl)
-        youtubeObj = YouTube(url)
-        vidStreams = youtubeObj.streams.filter(mime_type="video/mp4", type="video").order_by('resolution')
+        ydl_opts = {}
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info_dict = ydl.extract_info(video_url, download=False)
+            formats = info_dict.get('formats', [])
 
-        streamUrls = []
+            # Filter and sort formats by resolution
+            sorted_formats = sorted(
+                [(f['format_id'], f.get('resolution', 'unknown'), f['url']) for f in formats if 'url' in f],
+                key=lambda x: int(x[1].split('p')[0]) if 'p' in x[1] and x[1].split('p')[0].isdigit() else 0
+            )
 
-        for stream in vidStreams:
-            streamUrls.append(stream.url)
+            # Add the sorted formats as strings to the global list
+            sorted_video_streams.extend(
+                [f'Resolution: {resolution}, URL: {url}' for fmt_id, resolution, url in sorted_formats]
+            )
 
-        return streamUrls
     except Exception as e:
-        logging.error(f"Error processing URL {userUrl}: {e}")
+        logging.error(f"Error processing URL {video_url}: {e}")
         raise e
 
 
