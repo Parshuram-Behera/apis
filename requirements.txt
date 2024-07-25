@@ -1,4 +1,4 @@
 appwrite
 yt_dlp
-selenium
-beautifulsoup4
+
+fake_useragent==1.2.1

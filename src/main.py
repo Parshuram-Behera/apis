@@ -1,73 +1,37 @@
 from appwrite.client import Client
 import os
+
 import logging
 import yt_dlp
-import time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from bs4 import BeautifulSoup
+from fake_useragent import UserAgent
 
+# Create an instance of UserAgent
+ua = UserAgent()
 
 def get_download_urls(video_url):
     try:
-        # Configure Selenium to use headless Chrome
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("start-maximized")
-        chrome_options.add_argument("disable-infobars")
-        chrome_options.add_argument("--disable-extensions")
+        # Use a random User-Agent from fake_useragent
+        ydl_opts = {
+            'headers': {
+                'User-Agent': ua.random
+            }
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info_dict = ydl.extract_info(video_url, download=False)
+            formats = info_dict.get('formats', [])
 
-        driver = webdriver.Chrome(options=chrome_options)
-        driver.get(video_url)
+            # Filter and sort formats by resolution
+            sorted_formats = sorted(
+                [(f['format_id'], f.get('resolution', 'unknown'), f['url']) for f in formats if 'url' in f],
+                key=lambda x: int(x[1].split('p')[0]) if 'p' in x[1] and x[1].split('p')[0].isdigit() else 0
+            )
 
-        # Wait for the page to load and handle potential CAPTCHAs
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.TAG_NAME, "body"))
-        )
-        time.sleep(10)  # Adjust sleep time as needed
-
-        # Parse the page source with BeautifulSoup
-        page_source = driver.page_source
-        driver.quit()
-        soup = BeautifulSoup(page_source, 'html.parser')
-
-        # Example parsing logic (YouTube's page structure can be complex)
-        video_urls = []
-        for script in soup.find_all('script'):
-            if 'var ytInitialPlayerResponse' in script.text:
-                start_index = script.text.find('var ytInitialPlayerResponse =') + len('var ytInitialPlayerResponse = ')
-                end_index = script.text.find(';', start_index)
-                json_text = script.text[start_index:end_index].strip()
-
-                import json
-                player_response = json.loads(json_text)
-                formats = player_response.get('streamingData', {}).get('formats', [])
-
-                # Extract URLs from formats
-                for fmt in formats:
-                    url = fmt.get('url')
-                    resolution = fmt.get('height', 'unknown')
-                    if url:
-                        video_urls.append(f'Resolution: {resolution}p, URL: {url}')
-
-                break
-
-        if not video_urls:
-            logging.warning("No video URLs found")
-            return ["No video URLs found"]
-
-        return video_urls
+            # Return the sorted formats as strings
+            return [f'Resolution: {resolution}, URL: {url}' for fmt_id, resolution, url in sorted_formats]
 
     except Exception as e:
         logging.error(f"Error processing URL {video_url}: {e}")
         raise e
-
 
 def main(context):
     if context.req.method == "GET":
