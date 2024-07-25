@@ -1,2 +1,4 @@
 appwrite
 yt_dlp
+selenium
+beautifulsoup4
